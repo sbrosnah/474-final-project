@@ -17,3 +17,4 @@
 !**/europarl-data/embeddings/.gitkeep
 
 **/europarl-data/txt/*
+!**/europarl-data/txt/.gitkeep
