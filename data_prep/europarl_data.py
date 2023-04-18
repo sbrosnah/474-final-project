@@ -241,7 +241,7 @@ class EuroParlData:
         if not os.path.exists(file_path):
             return None
         
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             rows = []
             for line in f:
                 line = line.strip()
