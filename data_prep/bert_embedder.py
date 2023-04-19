@@ -1,47 +1,37 @@
 import torch
-from transformers import AutoTokenizer, BertModel
+from transformers import BertTokenizer, BertModel
 
 class BertEmbedder:
     def __init__(self):
-        self.tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
-        self.model = BertModel.from_pretrained("bert-base-multilingual-cased")
+        self.tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-uncased")
+        self.model = BertModel.from_pretrained("bert-base-multilingual-uncased")
         # Put the model in "evaluation" mode, meaning feed-forward operation.
         self.model.eval()
-
-    def get_sentence_embedding(self, text):
-
-        inputs = self.tokenizer(text, return_tensors="pt")
-        outputs = self.model(**inputs)
-
-        last_hidden_states = outputs.last_hidden_state
-
-        # # Remove dimension 1, the "batches".
-        token_embeddings = torch.squeeze(last_hidden_states, dim=1)
-
-        # # Swap dimensions 0 and 1.
-        token_embeddings = token_embeddings.permute(1,0,2)
-
-        # # Calculate the average of all 23 token vectors.
-        sentence_embedding = torch.mean(token_embeddings, dim=0)
-
-        return sentence_embedding.detach()[0]
+        self.batch_size = 64
 
     def get_sentence_embeddings(self, sentence_list):
-        size = len(sentence_list)
-        interval = size // 100
-        counter = 0
 
-        sentence_embeddings = []
-        for sentence in sentence_list:
-            if counter % interval == 0:
-                percentage_done = counter // interval 
-                print(f"{percentage_done}% done!")
-            sentence_embeddings.append(self.get_sentence_embedding(sentence))
-            counter += 1
-        
+        embeddings = []
 
-        
-        return torch.cat(sentence_embeddings)
+        #We process this in batches to speed things up as much as we can
+        for i in range(0, len(sentence_list), self.batch_size):
+            batch_sentences = sentence_list[i:i+self.batch_size]   
+            batch_tokens = self.tokenizer.batch_encode_plus(batch_sentences, return_tensors="pt", truncation=True, padding=True)
+            
+            with torch.no_grad():
+                outputs = self.model(batch_tokens['input_ids'], attention_mask=batch_tokens['attention_mask'], token_type_ids=batch_tokens['token_type_ids'])
+
+            last_hidden_states = outputs.last_hidden_state
+            print("last_hidden_states shape:", last_hidden_states.shape)
+
+            # # Calculate the average of all 23 token vectors.
+            sentence_embeddings = torch.mean(last_hidden_states, dim=1)
+
+            embeddings.append(sentence_embeddings)
+
+        embeddings = torch.cat(embeddings, dim=0)
+
+        return embeddings
     
     def save_embeddings(self, embeddings, filepath):
         #embeddings should be a tensor and filepath should be to a file with a .pt extension 
