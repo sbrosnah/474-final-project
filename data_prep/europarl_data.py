@@ -41,7 +41,13 @@ class EuroParlData:
         self.split_sentence_script = os.path.join(os.getcwd(), "europarl-data", "tools", "split-sentences.perl")
         self.tokenize_script = os.path.join(os.getcwd(), "europarl-data", "tools", "tokenizer.perl")
         self.redo_all = redo
-        self.embedder = BertEmbedder()
+
+        batch_size = 300
+        save_multiple = 1000
+        clean_multiple = 30
+        start_where_left = True
+
+        self.embedder = BertEmbedder(batch_size, save_multiple, clean_multiple, start_where_left)
         self.aligner = DataAligner()
     
     def get_tokenized_file(self, language_code):
