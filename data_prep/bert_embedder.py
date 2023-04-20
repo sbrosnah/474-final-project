@@ -92,6 +92,8 @@ class BertEmbedder:
                 save_paths.append(p)
                 save_count += 1
                 embeddings = []
+            
+            print(f"sentences done: {i + 1}/{len(sentence_list)}")
 
         if len(embeddings) != 0:
             embeddings = torch.cat(embeddings, dim=0)
