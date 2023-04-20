@@ -71,7 +71,7 @@ class BertEmbedder:
 
                 # # Calculate the average of all 23 token vectors.
                 # sentence_embeddings = torch.mean(last_hidden_states, dim=1).detach()
-                attention_mask = batch_tokens['attention_mask']
+                attention_mask = batch_tokens['attention_mask'].cpu()
                 masked_last_hidden_state = last_hidden_states * attention_mask.unsqueeze(-1)
                 sentence_embeddings = masked_last_hidden_state.sum(1) / attention_mask.sum(1).unsqueeze(-1)
                 del last_hidden_states
@@ -88,8 +88,6 @@ class BertEmbedder:
             if (((i+self.batch_size) % self.save_size) == 0):
                 embeddings = torch.cat(embeddings, dim=0)
                 p = os.path.join(self.root_save_path, f"tmp-embeddings-{save_count}.pt")
-                print("save size:", embeddings.shape)
-                print(embeddings)
                 self.save_embeddings(embeddings, p)
                 save_paths.append(p)
                 save_count += 1
@@ -107,8 +105,6 @@ class BertEmbedder:
         embeddings= []
         for save_path in save_paths:
             e = self.load_embeddings(save_path)
-            print("loaded size: ", e.shape)
-            print(e)
             embeddings.append(e)
 
         embeddings = torch.cat(embeddings, dim=0)
