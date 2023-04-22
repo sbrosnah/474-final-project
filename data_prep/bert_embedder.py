@@ -14,6 +14,7 @@ class BertEmbedder:
 
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-uncased")
         self.model = BertModel.from_pretrained("bert-base-multilingual-uncased").to(self.device)
+
         # Put the model in "evaluation" mode, meaning feed-forward operation.
         self.model.eval()
 
@@ -25,7 +26,7 @@ class BertEmbedder:
     
     def restore_state(self, sentence_list):
         #get all of the paths in the directory
-        paths = [os.path.join(self.root_save_path, n) for n in os.listdir(self.root_save_path)]
+        paths = [os.path.join(self.root_save_path, n) for n in os.listdir(self.root_save_path) if n != ".gitkeep"]
         max_count = -1
         count = 0
         for p in paths:
@@ -101,7 +102,7 @@ class BertEmbedder:
             self.save_embeddings(embeddings, p)
             save_paths.append(p)
         else: 
-            save_count -= 1
+            save_count = max(0, save_count - 1)
 
         #now we loop through all of the save paths, load them up into embeddings, concatenate it, and then return it
         embeddings= []
@@ -109,7 +110,10 @@ class BertEmbedder:
             e = self.load_embeddings(save_path)
             embeddings.append(e)
 
-        embeddings = torch.cat(embeddings, dim=0)
+        if len(embeddings) > 0:
+            embeddings = torch.cat(embeddings, dim=0)
+        else:
+            embeddings = None
 
         #delete all of the temp files 
         self.delete_temp_files()
