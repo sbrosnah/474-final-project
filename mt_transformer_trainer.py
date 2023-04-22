@@ -9,6 +9,8 @@ from torchtext.legacy import data
 import gc
 import spacy
 
+global max_src_in_batch, max_tgt_in_batch
+
 def batch_size_fn(new, count, sofar):
     "Keep augmenting batch and calculate total number of tokens + padding."
     if count == 1:
